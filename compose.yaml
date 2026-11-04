@@ -1,0 +1,28 @@
+services:
+  management:
+    build: .
+    image: gravenlace-management:local
+    user: "${GRAVENLACE_UID:-10001}:${GRAVENLACE_GID:-10001}"
+    restart: unless-stopped
+    stop_grace_period: 10s
+    ports:
+      - "127.0.0.1:${GRAVENLACE_HTTP_PORT:-8000}:8000/tcp"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 256m
+    cpus: 1.0
+    secrets:
+      - gravenlace_admin_token
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+secrets:
+  gravenlace_admin_token:
+    file: ./secrets/admin-token

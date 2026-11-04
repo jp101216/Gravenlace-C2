@@ -1,2 +1,120 @@
 # Gravenlace-C2
-Experimental Rust management service for Gravenlace with authenticated status, health checks, Docker configuration, and CI build and runtime checks.
+
+A standalone Linux service for Gravenlace management health and authenticated process status, using Axum and Tokio. The repository currently contains this management-only service. It is separate from the recovered C2 server and has no implant communication, tasking, payload execution, or cryptographic exchange routes.
+
+**Build status: source and configuration prepared; Rust compilation and Docker startup have not been verified in the preparation environment.** See [VALIDATION.md](VALIDATION.md). Do not describe this package as a successfully tested server release until its build and runtime checks pass.
+
+## What changed
+
+- Reconstructed `Cargo.toml` with five exact direct dependency versions observed in current crate documentation on November 4, 2026.
+- Selected Rust 1.99.1 for native builds, Docker, and CI.
+- Replaced the earlier sequential HTTP implementation with an asynchronous Axum/Tokio service.
+- Added a four-client concurrency check, authenticated status, bounded active-request handling, and an eight-second shutdown drain deadline.
+- Updated Docker configuration, configurable host port, helper tests, and a complete native/container CI workflow.
+
+See [FEATURES.md](FEATURES.md) and [DEPENDENCIES.md](DEPENDENCIES.md) for scope and version details.
+
+## Docker startup
+
+Requirements: Linux, Python 3.11 or newer, and a current Docker Engine with the Compose plugin. The first image build needs internet access to download its base images and Cargo dependencies.
+
+Run from this directory as a regular user:
+
+```sh
+python3 scripts/init_local.py
+python3 scripts/verify_structure.py
+python3 -B -m unittest discover -s tests -v
+docker compose config --quiet
+docker compose up --build -d --wait --wait-timeout 90
+docker compose ps
+docker compose logs --tail 50 management
+```
+
+Setup creates `secrets/admin-token` with private permissions and writes numeric host UID/GID settings to `.env`. It does not print the token or overwrite existing configuration. If those files already exist, skip the setup command and preserve them.
+
+The service publishes only `127.0.0.1:8000` on the host. The private token is mounted as a file-backed secret. The runtime uses a non-root identity, read-only root filesystem, dropped capabilities, bounded logs, and resource limits.
+
+After startup, check the actual container service without printing the credential:
+
+```sh
+python3 scripts/smoke_test.py --url http://127.0.0.1:8000 --token-file secrets/admin-token
+```
+
+The smoke check verifies health, status authentication, rejection of unsupported inputs, and four concurrent clients while another connection is incomplete. It does not test the recovered C2 server or any implant.
+
+Stop this service with:
+
+```sh
+docker compose down --timeout 10
+```
+
+## Lockfile on the first build
+
+The dependency-free scaffold's old lockfile was removed. It does not describe this new dependency graph. No replacement lockfile has been fabricated.
+
+On the first Docker build, Cargo resolves the exact direct dependencies and generates the real transitive graph. The build then uses `--locked`. The resulting lockfile is retained in the image. Copy it into this source directory after a successful build:
+
+```sh
+docker compose cp management:/usr/share/gravenlace/Cargo.lock ./Cargo.lock
+```
+
+Commit that generated `Cargo.lock` together with the manifest. Later image builds use the supplied lockfile and fail if it disagrees with the manifest. First builds without a lockfile can resolve different transitive versions at different times.
+
+## Run four local instances
+
+Each person can use a separate checkout and run setup independently, producing a separate token. To run several instances on one computer, choose a distinct Compose project name and host port for each:
+
+```sh
+GRAVENLACE_HTTP_PORT=8001 docker compose -p gravenlace-one up --build -d --wait
+```
+
+Repeat from separate checkouts with different project names and ports, such as 8002, 8003, and 8004. Use the matching host port in each smoke-test URL and the matching `-p` project name when stopping it. The public health endpoint and protected status endpoint also support multiple clients of a single instance; independent user accounts are not implemented.
+
+## Native build and tests
+
+Use the selected Rust toolchain on Linux. The toolchain file requests Rust 1.99.1. Dependency downloads require network access.
+
+```sh
+if [ ! -f Cargo.lock ]; then cargo generate-lockfile; fi
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+cargo build --release --locked
+python3 scripts/smoke_test.py target/release/gravenlace-management
+```
+
+After local setup, a normal native launch is:
+
+```sh
+export GRAVENLACE_TOKEN_FILE="$PWD/secrets/admin-token"
+./target/release/gravenlace-management --check-config
+./target/release/gravenlace-management
+```
+
+The `--health-check` command checks the loopback health endpoint. `--help` lists supported arguments. A native systemd unit is also retained under `deploy/`; its activation is not verified here. Choose Docker or native deployment for a given address/port.
+
+## HTTP surface and configuration
+
+| Item | Behavior |
+| --- | --- |
+| `GET /healthz` | Public minimal process health after startup configuration succeeds |
+| `GET /api/v1/status` | Exact bearer token required; returns this service's version, uptime, and request count |
+| Other routes | No handler; no C2 routes are registered |
+| `GRAVENLACE_TOKEN_FILE` | Required private file containing a 64-character hexadecimal token |
+| `GRAVENLACE_BIND` | Native default `127.0.0.1:8000` |
+| `GRAVENLACE_ALLOW_NON_LOOPBACK` | Must be `1` to allow a non-loopback bind; set inside the container |
+| `GRAVENLACE_HTTP_PORT` | Compose host port, default 8000; publication stays on host loopback |
+| `GRAVENLACE_HEALTH_ADDR` | Health-command destination, default `127.0.0.1:8000`; loopback only |
+
+Requests have no body. Duplicate authorization headers are rejected. Application-level header/URI bounds and 32 in-flight handler permits are present. These are not a global connection limit or a defense against every incomplete-header/resource-exhaustion condition. This service is intended behind the local management boundary, and does not provide TLS or remote team access.
+
+SIGINT/SIGTERM triggers Axum graceful shutdown. The process waits up to eight seconds for draining and reports a failure if that deadline expires. The container restart policy is not an application self-healing guarantee.
+
+## GitHub
+
+The included workflow resolves a missing lockfile, runs Rust tests and Clippy, builds the native binary, exercises it, builds/starts the container, and exercises the container. No successful workflow run is claimed yet. Dependabot configuration requests weekly reviewable Cargo and GitHub Actions updates after publication; it does not auto-merge changes.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Build and runtime results are tracked in this repository's Actions runs and in [VALIDATION.md](VALIDATION.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE). Third-party crates and base images retain their own licenses.
