@@ -1,19 +1,34 @@
-# Management-only feature list
+# Feature overview
 
-The supplied Rust/native/container checks passed in [GitHub Actions](https://github.com/jp101216/Gravenlace-C2/actions/runs/41829639900). This records a tested management-service baseline, not a production security audit.
+Gravenlace's recovered research source and the tested management demo are different artifacts. This overview keeps their evidence separate.
 
-| Feature | Scope and current evidence |
+## Recovered server research
+
+| Area | Evidence status |
 | --- | --- |
-| Concurrent HTTP handling | Axum on a two-thread Tokio runtime; the four-client smoke check passed natively and in Docker |
-| Health endpoint | Minimal public process-health response after configuration and socket bind succeed |
-| Protected process status | Exact bearer-token authentication; version, uptime, and request count only |
-| Private startup credential | Random token helper; private file-mode and non-overwrite behavior covered by passing Python tests |
-| Request handling bounds | No request bodies; application header/URI bounds; 32 handler permits; handler/body timeouts |
-| Logging | Fixed event/route labels and status codes; request headers and tokens are not intentionally logged |
-| Shutdown | SIGINT/SIGTERM, Axum draining, eight-second deadline, honest failure on deadline expiry |
-| Container configuration | Non-root, loopback host port, read-only root, dropped capabilities, bounded resource/log settings |
-| Independent local instances | Separate checkouts/tokens, distinct Compose project names, configurable host ports |
-| Current dependency selection | Five direct crates pinned to current documented releases, with Rust 1.99.1 selected |
-| Build/runtime verification | CI passed Rust tests, lint, native smoke checks, image build/start, and container smoke checks |
+| Operator roles, private configuration, session expiry, and authorization gates | Source present; full-server runtime behavior unverified |
+| Concurrent state, listener registry, and profile models | Source present; transport implementations have mixed completeness |
+| Live logs, historical records, and optional telemetry export | Source present; no full-server durability or delivery proof |
+| Credential records, file metadata, technique mappings, and playbook registration | Models and handlers present; these do not establish collection, file transfer, analytics, or playbook execution |
+| X25519 exchange and session-key metadata | Inline and standalone source present; cryptographic guarantees unverified |
+| DNS, SMB, HTTP/3, and other declared transports | Several partial or placeholder paths; see the body-level evidence |
+| Payload output and proxy/routing support | Placeholder or partial implementation; no end-to-end capability demonstrated |
+| Monitoring, recovery, and shutdown | Health/lifecycle code and restart configuration present; complete readiness, self-healing, and draining not established |
+| Original server build | Matching Cargo metadata was not recovered; this source is not built by repository CI |
 
-This service does not implement remote team login, independent operator accounts, an implant channel, tasking, payload execution, key exchange, database-backed telemetry, or the other operational parts of the recovered C2 server. Its health endpoint is not proof of those capabilities. Container restart configuration is not a self-healing guarantee.
+The [detailed feature table](research/FEATURE_EVIDENCE.md) provides line links and describes each limitation. [Review notes](research/REVIEW_NOTES.md) explain the main security and completeness observations. Implant capabilities and comparative performance claims are outside this publication.
+
+## Tested management service
+
+| Feature | What was verified |
+| --- | --- |
+| Concurrent HTTP handling | Four clients completed while another connection was incomplete, both natively and in Docker |
+| Health and protected process status | Health, valid/invalid authentication, and the limited route scope passed smoke checks |
+| Private startup credential | Four Python tests cover token generation, private file modes, and preserving existing configuration |
+| Request handling bounds | Supplied malformed/body/oversized-request rejection checks passed |
+| Logging and native shutdown | Native SIGTERM shutdown and token-redaction checks passed |
+| Container startup | Image built, Compose validation passed, and the container became healthy |
+| Reproducible dependency graph | Five direct pins and the real committed Cargo.lock passed locked builds |
+| Current publication integrity | Snapshot checksums and provenance are checked separately from runtime tests |
+
+The [successful main-branch CI run](https://github.com/jp101216/Gravenlace-C2/actions/runs/41831371225) supports the management-service results. This is a functional baseline, not a production security audit or capacity benchmark. See [VALIDATION.md](VALIDATION.md) for details.

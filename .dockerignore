@@ -6,3 +6,5 @@
 !src/**
 !Dockerfile
 !LICENSE
+# Reference material is never an input to the management image.
+research/

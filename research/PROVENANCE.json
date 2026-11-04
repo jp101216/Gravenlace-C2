@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "recorded_on": "2026-11-04",
+  "purpose": "Preserve the recovered server research for static review.",
+  "historical_original_claim": false,
+  "revision_context": "The server and container files already include earlier Gravenlace naming and defensive management edits. This import preserves those supplied revisions without further content edits. The standalone exchange file is preserved as supplied.",
+  "build_scope": "These snapshots are outside the Cargo targets and are excluded from the management image build context.",
+  "files": [
+    {
+      "path": "research/snapshots/server/main.rs",
+      "supplied_filename": "COPY OF MAIN (1).RS",
+      "sha256": "5085e4c81a77f26f01dd423c24076b893c0c83fd32d1469e660101e4272c3fb2",
+      "bytes": 80914,
+      "lines": 1952,
+      "encoding": "UTF-8",
+      "line_endings": "LF",
+      "revision_note": "Recovered server after the earlier branding and defensive management edits.",
+      "content_changed_during_import": false
+    },
+    {
+      "path": "research/snapshots/crypto_exchange.rs",
+      "supplied_filename": "copy of crypto_echange.rs",
+      "sha256": "106f0f9d0db2ab30d67fcd6f325bc18878a8a126c084af2afb70b0f21a360fff",
+      "bytes": 5029,
+      "lines": 101,
+      "encoding": "UTF-8",
+      "line_endings": "CRLF",
+      "revision_note": "Standalone exchange file as supplied; overlaps the server inline module.",
+      "content_changed_during_import": false
+    },
+    {
+      "path": "research/snapshots/server/Dockerfile",
+      "supplied_filename": "copy of Dcokerfile.txt",
+      "sha256": "c10d0476ea81f6329c12410a6942c4f850747a59c53a1a5f832b6286c6399588",
+      "bytes": 1478,
+      "lines": 32,
+      "encoding": "UTF-8",
+      "line_endings": "LF",
+      "revision_note": "Recovered server Docker configuration after the earlier branding and defensive edits.",
+      "content_changed_during_import": false
+    },
+    {
+      "path": "research/snapshots/server/compose.yaml",
+      "supplied_filename": "copy of docker-compose.yaml",
+      "sha256": "095138012620952507420d065337bce6f00de1fe800d01c0f69ad1d6592aa982",
+      "bytes": 790,
+      "lines": 34,
+      "encoding": "UTF-8",
+      "line_endings": "LF",
+      "revision_note": "Recovered server Compose configuration after the earlier branding and defensive edits.",
+      "content_changed_during_import": false
+    }
+  ]
+}
