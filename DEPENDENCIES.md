@@ -1,5 +1,7 @@
 # Selected versions
 
+This file describes the compiled management service. The recovered research source has no reconstructed dependency graph; see [research/README.md](research/README.md).
+
 Checked November 4, 2026 using each project's current documentation and the Rust release announcement. These direct versions resolved, compiled, and passed the supplied native/container checks in [GitHub Actions](https://github.com/jp101216/Gravenlace-C2/actions/runs/41829639900).
 
 | Dependency | Exact manifest version | Source |

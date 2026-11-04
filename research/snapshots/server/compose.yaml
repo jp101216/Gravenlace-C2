@@ -1,0 +1,34 @@
+services:
+  gravenlace_server:
+    build: .
+    image: gravenlace-server:local
+    user: "${GRAVENLACE_UID:-10001}:${GRAVENLACE_GID:-10001}"
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:8000:8000/tcp"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    secrets:
+      - gravenlace_operators
+    volumes:
+      - type: bind
+        source: "${GRAVENLACE_DATA_DIR:-./gravenlace-server/gravenlace_db}"
+        target: /app/gravenlace_db
+        bind:
+          create_host_path: false
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+secrets:
+  gravenlace_operators:
+    file: ./secrets/operators.json
