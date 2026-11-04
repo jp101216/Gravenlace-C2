@@ -1,0 +1,21 @@
+[package]
+name = "gravenlace-management"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+description = "Concurrent standalone management health and status service"
+readme = "README.md"
+license = "MIT"
+
+[dependencies]
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+subtle = "=2.6.1"
+tokio = { version = "=1.54.1", features = ["io-util", "macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "debuginfo"

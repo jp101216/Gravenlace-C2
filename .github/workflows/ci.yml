@@ -1,0 +1,56 @@
+name: Management service build and runtime checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  management:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install the selected Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --component clippy,rustfmt
+      - name: Verify metadata and configuration helper
+        run: |
+          python3 scripts/verify_structure.py
+          python3 -B -m unittest discover -s tests -v
+      - name: Verify the checked-in lockfile
+        run: |
+          cargo metadata --locked --format-version 1 > /dev/null
+      - name: Retain the checked-in Cargo lockfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: resolved-cargo-lock
+          path: Cargo.lock
+          if-no-files-found: error
+          retention-days: 7
+      - name: Rust tests and lint
+        run: |
+          cargo test --locked
+          cargo clippy --locked --all-targets -- -D warnings
+      - name: Build and exercise the native management service
+        run: |
+          cargo build --release --locked
+          python3 scripts/smoke_test.py target/release/gravenlace-management
+      - name: Prepare private container configuration
+        run: python3 scripts/init_local.py
+      - name: Validate and start the management container
+        run: |
+          docker compose config --quiet
+          docker compose up -d --build --wait --wait-timeout 90
+      - name: Exercise the container service
+        run: python3 scripts/smoke_test.py --url http://127.0.0.1:8000 --token-file secrets/admin-token
+      - name: Container logs and cleanup
+        if: always()
+        run: |
+          docker compose logs --no-color
+          docker compose down --timeout 10
