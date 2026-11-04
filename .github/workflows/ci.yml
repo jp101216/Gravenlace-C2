@@ -2,6 +2,7 @@ name: Management service build and runtime checks
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -22,11 +23,10 @@ jobs:
         run: |
           python3 scripts/verify_structure.py
           python3 -B -m unittest discover -s tests -v
-      - name: Resolve missing lockfile once
+      - name: Verify the checked-in lockfile
         run: |
-          if [ ! -f Cargo.lock ]; then cargo generate-lockfile; fi
           cargo metadata --locked --format-version 1 > /dev/null
-      - name: Retain the resolved Cargo lockfile
+      - name: Retain the checked-in Cargo lockfile
         uses: actions/upload-artifact@v7
         with:
           name: resolved-cargo-lock

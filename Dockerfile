@@ -1,9 +1,8 @@
 FROM rust:1.99.1-bookworm AS builder
 WORKDIR /workspace
 COPY . .
-# Resolve the real graph on first build. Reuse a supplied lockfile on later builds.
-RUN if [ ! -f Cargo.lock ]; then cargo generate-lockfile; fi \
-    && cargo build --release --locked
+# The checked-in lockfile records the graph exercised by CI.
+RUN cargo build --release --locked
 
 FROM debian:bookworm-slim
 COPY --from=builder /workspace/target/release/gravenlace-management /usr/local/bin/gravenlace-management

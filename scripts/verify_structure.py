@@ -24,6 +24,7 @@ def verify(root: Path) -> dict:
     toolchain = tomllib.loads((root / "rust-toolchain.toml").read_text())
     assert toolchain["toolchain"]["channel"] == "1.99.1"
     lock_path = root / "Cargo.lock"
+    assert lock_path.is_file(), "the CI-generated Cargo.lock must be committed"
     if lock_path.exists():
         lock = tomllib.loads(lock_path.read_text())
         assert isinstance(lock.get("version"), int)
@@ -36,7 +37,7 @@ def verify(root: Path) -> dict:
     source = (root / "src/lib.rs").read_text()
     main = (root / "src/main.rs").read_text()
     required = [
-        "src/lib.rs", "src/main.rs", "Cargo.toml", "rust-toolchain.toml", "Dockerfile",
+        "src/lib.rs", "src/main.rs", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "Dockerfile",
         "compose.yaml", "deploy/gravenlace-management.service", "README.md",
         "VALIDATION.md", "DEPENDENCIES.md", "LICENSE", ".gitignore", ".dockerignore",
         ".github/workflows/ci.yml", ".github/dependabot.yml", "scripts/smoke_test.py",
@@ -44,7 +45,8 @@ def verify(root: Path) -> dict:
     for path in required:
         assert (root / path).is_file(), path
     assert "FROM rust:1.99.1-bookworm AS builder" in docker
-    assert "cargo generate-lockfile" in docker and "cargo build --release --locked" in docker
+    assert "cargo build --release --locked" in docker
+    assert "cargo generate-lockfile" not in docker
     assert "USER 10001:10001" in docker and '"--health-check"' in docker
     assert "127.0.0.1:${GRAVENLACE_HTTP_PORT:-8000}:8000/tcp" in compose
     assert "read_only: true" in compose and "no-new-privileges:true" in compose
